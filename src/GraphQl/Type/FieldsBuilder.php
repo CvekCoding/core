@@ -30,6 +30,7 @@ use Psr\Container\ContainerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\PropertyInfo\Type;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Builds the GraphQL fields.
@@ -53,8 +54,9 @@ final class FieldsBuilder implements FieldsBuilderInterface
     private $pagination;
     private $nameConverter;
     private $nestingSeparator;
+    private $translator;
 
-    public function __construct(PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory, PropertyMetadataFactoryInterface $propertyMetadataFactory, ResourceMetadataFactoryInterface $resourceMetadataFactory, TypesContainerInterface $typesContainer, TypeBuilderInterface $typeBuilder, TypeConverterInterface $typeConverter, ResolverFactoryInterface $itemResolverFactory, ResolverFactoryInterface $collectionResolverFactory, ResolverFactoryInterface $itemMutationResolverFactory, ContainerInterface $filterLocator, Pagination $pagination, ?NameConverterInterface $nameConverter, string $nestingSeparator)
+    public function __construct(PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory, PropertyMetadataFactoryInterface $propertyMetadataFactory, ResourceMetadataFactoryInterface $resourceMetadataFactory, TypesContainerInterface $typesContainer, TypeBuilderInterface $typeBuilder, TypeConverterInterface $typeConverter, ResolverFactoryInterface $itemResolverFactory, ResolverFactoryInterface $collectionResolverFactory, ResolverFactoryInterface $itemMutationResolverFactory, ContainerInterface $filterLocator, Pagination $pagination, ?NameConverterInterface $nameConverter, string $nestingSeparator, TranslatorInterface $translator)
     {
         $this->propertyNameCollectionFactory = $propertyNameCollectionFactory;
         $this->propertyMetadataFactory = $propertyMetadataFactory;
@@ -69,6 +71,7 @@ final class FieldsBuilder implements FieldsBuilderInterface
         $this->pagination = $pagination;
         $this->nameConverter = $nameConverter;
         $this->nestingSeparator = $nestingSeparator;
+        $this->translator = $translator;
     }
 
     /**
@@ -218,6 +221,10 @@ final class FieldsBuilder implements FieldsBuilderInterface
             }
 
             $args[$id]['type'] = $this->typeConverter->resolveType($arg['type']);
+
+            if (isset($args[$id]['description'])) {
+                $args[$id]['description'] = $this->translator->trans($args[$id]['description']);
+            }
         }
 
         return $args;
