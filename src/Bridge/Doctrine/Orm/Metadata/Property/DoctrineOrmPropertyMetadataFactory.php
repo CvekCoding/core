@@ -15,8 +15,8 @@ namespace ApiPlatform\Core\Bridge\Doctrine\Orm\Metadata\Property;
 
 use ApiPlatform\Core\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Property\PropertyMetadata;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Use Doctrine metadata to populate the identifier property.
@@ -74,6 +74,13 @@ final class DoctrineOrmPropertyMetadataFactory implements PropertyMetadataFactor
 
         if (null === $propertyMetadata->isIdentifier()) {
             $propertyMetadata = $propertyMetadata->withIdentifier(false);
+        }
+
+        if ($doctrineClassMetadata instanceof ClassMetadataInfo && \in_array($property, $doctrineClassMetadata->getFieldNames(), true)) {
+            $fieldMapping = $doctrineClassMetadata->getFieldMapping($property);
+            if (\array_key_exists('options', $fieldMapping) && \array_key_exists('default', $fieldMapping['options'])) {
+                $propertyMetadata = $propertyMetadata->withDefault($fieldMapping['options']['default']);
+            }
         }
 
         return $propertyMetadata;

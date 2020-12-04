@@ -29,6 +29,8 @@ use ApiPlatform\Core\DataProvider\SubresourceDataProviderInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Tests\Fixtures\DummyEntity;
+use ApiPlatform\Core\Tests\ProphecyTrait;
+use PackageVersions\Versions;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\ParameterBag;
@@ -41,6 +43,8 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 class RequestDataCollectorTest extends TestCase
 {
+    use ProphecyTrait;
+
     private $request;
     private $response;
     private $attributes;
@@ -138,6 +142,8 @@ class RequestDataCollectorTest extends TestCase
 
         $this->assertSame([
             'resource_class' => DummyEntity::class,
+            'has_composite_identifier' => false,
+            'identifiers' => ['id' => [DummyEntity::class, 'id']],
             'item_operation_name' => 'get',
             'receive' => true,
             'respond' => true,
@@ -177,7 +183,8 @@ class RequestDataCollectorTest extends TestCase
 
         $dataProvider = $dataCollector->getCollectionDataProviders();
         foreach ($dataProvider['responses'] as $class => $response) {
-            $this->assertStringStartsWith('class@anonymous', $class);
+            $this->assertStringContainsString('@anonymous', $class);
+
             $this->assertTrue($response);
         }
         $context = $dataProvider['context'];
@@ -186,7 +193,7 @@ class RequestDataCollectorTest extends TestCase
 
         $dataProvider = $dataCollector->getItemDataProviders();
         foreach ($dataProvider['responses'] as $class => $response) {
-            $this->assertStringStartsWith('class@anonymous', $class);
+            $this->assertStringContainsString('@anonymous', $class);
             $this->assertTrue($response);
         }
         $context = $dataProvider['context'];
@@ -195,7 +202,7 @@ class RequestDataCollectorTest extends TestCase
 
         $dataProvider = $dataCollector->getSubresourceDataProviders();
         foreach ($dataProvider['responses'] as $class => $response) {
-            $this->assertStringStartsWith('class@anonymous', $class);
+            $this->assertStringContainsString('@anonymous', $class);
             $this->assertTrue($response);
         }
         $context = $dataProvider['context'];
@@ -204,9 +211,30 @@ class RequestDataCollectorTest extends TestCase
 
         $dataPersister = $dataCollector->getDataPersisters();
         foreach ($dataPersister['responses'] as $class => $response) {
-            $this->assertStringStartsWith('class@anonymous', $class);
+            $this->assertStringContainsString('@anonymous', $class);
             $this->assertTrue($response);
         }
+    }
+
+    public function testVersionCollection()
+    {
+        $this->apiResourceClassWillReturn(DummyEntity::class);
+
+        $dataCollector = new RequestDataCollector(
+            $this->metadataFactory->reveal(),
+            $this->filterLocator->reveal(),
+            $this->getUsedCollectionDataProvider(),
+            $this->getUsedItemDataProvider(),
+            $this->getUsedSubresourceDataProvider(),
+            $this->getUsedPersister()
+        );
+
+        $dataCollector->collect(
+            $this->request->reveal(),
+            $this->response
+        );
+
+        $this->assertSame(null !== $dataCollector->getVersion(), class_exists(Versions::class));
     }
 
     private function apiResourceClassWillReturn($data, $context = [])
@@ -256,7 +284,7 @@ class RequestDataCollectorTest extends TestCase
                 }
             },
         ]));
-        $itemDataProvider->getItem('', '', null, ['item_context']);
+        $itemDataProvider->getItem('', [], null, ['item_context']);
 
         return $itemDataProvider;
     }

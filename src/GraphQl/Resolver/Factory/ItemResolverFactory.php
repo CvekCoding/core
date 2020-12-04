@@ -70,7 +70,7 @@ final class ItemResolverFactory implements ResolverFactoryInterface
             }
 
             $operationName = $operationName ?? 'item_query';
-            $resolverContext = ['source' => $source, 'args' => $args, 'info' => $info, 'is_collection' => false, 'is_mutation' => false];
+            $resolverContext = ['source' => $source, 'args' => $args, 'info' => $info, 'is_collection' => false, 'is_mutation' => false, 'is_subscription' => false];
 
             $item = ($this->readStage)($resourceClass, $rootClass, $operationName, $resolverContext);
             if (null !== $item && !\is_object($item)) {
@@ -107,13 +107,13 @@ final class ItemResolverFactory implements ResolverFactoryInterface
     /**
      * @param object|null $item
      *
-     * @throws Error
+     * @throws \UnexpectedValueException
      */
     private function getResourceClass($item, ?string $resourceClass, ResolveInfo $info, string $errorMessage = 'Resolver only handles items of class %s but retrieved item is of class %s.'): string
     {
         if (null === $item) {
             if (null === $resourceClass) {
-                throw Error::createLocatedError('Resource class cannot be determined.', $info->fieldNodes, $info->path);
+                throw new \UnexpectedValueException('Resource class cannot be determined.');
             }
 
             return $resourceClass;
@@ -139,7 +139,7 @@ final class ItemResolverFactory implements ResolverFactoryInterface
         }
 
         if ($resourceClass !== $itemClass) {
-            throw Error::createLocatedError(sprintf($errorMessage, (new \ReflectionClass($resourceClass))->getShortName(), (new \ReflectionClass($itemClass))->getShortName()), $info->fieldNodes, $info->path);
+            throw new \UnexpectedValueException(sprintf($errorMessage, (new \ReflectionClass($resourceClass))->getShortName(), (new \ReflectionClass($itemClass))->getShortName()));
         }
 
         return $resourceClass;

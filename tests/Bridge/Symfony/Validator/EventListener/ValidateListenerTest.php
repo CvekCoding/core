@@ -18,6 +18,7 @@ use ApiPlatform\Core\Bridge\Symfony\Validator\Exception\ValidationException;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Tests\Fixtures\DummyEntity;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Psr\Container\ContainerInterface;
@@ -34,6 +35,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class ValidateListenerTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testNotAnApiPlatformRequest()
     {
         $validatorProphecy = $this->prophesize(ValidatorInterface::class);
@@ -46,11 +49,10 @@ class ValidateListenerTest extends TestCase
         $request = new Request();
         $request->setMethod('POST');
 
-        $event = $this->prophesize(ViewEvent::class);
-        $event->getRequest()->willReturn($request);
-
         $listener = new ValidateListener($validator, $resourceMetadataFactory);
-        $listener->onKernelView($event->reveal());
+
+        $event = new ViewEvent($this->prophesize(HttpKernelInterface::class)->reveal(), $request, HttpKernelInterface::MASTER_REQUEST, []);
+        $listener->onKernelView($event);
     }
 
     public function testValidatorIsCalled()

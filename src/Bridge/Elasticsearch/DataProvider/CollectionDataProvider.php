@@ -115,7 +115,8 @@ final class CollectionDataProvider implements ContextAwareCollectionDataProvider
             $documents,
             $resourceClass,
             $limit,
-            $offset
+            $offset,
+            $context
         );
     }
 }

@@ -27,13 +27,16 @@ final class TransformFilteringParametersListener
     public function onKernelRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();
+        $filterParameter = $request->query->all()['filter'] ?? null;
+
         if (
-            'jsonapi' !== $request->getRequestFormat() ||
-            null === ($filterParameter = $request->query->get('filter')) ||
-            !\is_array($filterParameter)
+            !$filterParameter ||
+            !\is_array($filterParameter) ||
+            'jsonapi' !== $request->getRequestFormat()
         ) {
             return;
         }
+
         $filters = $request->attributes->get('_api_filters', []);
         $request->attributes->set('_api_filters', array_merge($filterParameter, $filters));
     }

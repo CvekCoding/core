@@ -16,6 +16,7 @@ namespace ApiPlatform\Core\Tests\Metadata\Resource\Factory;
 use ApiPlatform\Core\Metadata\Resource\Factory\AnnotationResourceNameCollectionFactory;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceNameCollection;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use Doctrine\Common\Annotations\Reader;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  */
 class AnnotationResourceNameCollectionFactoryTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testCreate()
     {
         $decorated = $this->prophesize(ResourceNameCollectionFactoryInterface::class);
@@ -33,6 +36,18 @@ class AnnotationResourceNameCollectionFactoryTest extends TestCase
 
         $metadata = new AnnotationResourceNameCollectionFactory($reader->reveal(), [], $decorated->reveal());
 
+        $this->assertEquals(new ResourceNameCollection(['foo', 'bar']), $metadata->create());
+    }
+
+    /**
+     * @requires PHP 8.0
+     */
+    public function testCreateAttribute()
+    {
+        $decorated = $this->prophesize(ResourceNameCollectionFactoryInterface::class);
+        $decorated->create()->willReturn(new ResourceNameCollection(['foo', 'bar']))->shouldBeCalled();
+
+        $metadata = new AnnotationResourceNameCollectionFactory(null, [], $decorated->reveal());
         $this->assertEquals(new ResourceNameCollection(['foo', 'bar']), $metadata->create());
     }
 }

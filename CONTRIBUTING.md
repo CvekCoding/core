@@ -18,11 +18,6 @@ Then, if it appears that it's a real bug, you may report it using GitHub by foll
 
 > _NOTE:_ Don't hesitate giving as much information as you can (OS, PHP version extensions...)
 
-### Security Issues
-
-If you find a security issue, send a mail to Kévin Dunglas <dunglas@gmail.com>. **Please do not report security problems
-publicly**. We will disclose details of the issue and credit you after having released a new version including a fix.
-
 ## Pull Requests
 
 ### Writing a Pull Request
@@ -50,7 +45,7 @@ Alternatively, you can also work with the test application we provide:
 ### Matching Coding Standards
 
 The API Platform project follows [Symfony coding standards](https://symfony.com/doc/current/contributing/code/standards.html).
-But don't worry, you can fix CS issues automatically using the [PHP CS Fixer](http://cs.sensiolabs.org/) tool:
+But don't worry, you can fix CS issues automatically using the [PHP CS Fixer](https://cs.sensiolabs.org/) tool:
 
     php-cs-fixer.phar fix
 
@@ -67,25 +62,22 @@ When you send a PR, just make sure that:
 * You make the PR on the same branch you based your changes on. If you see commits
 that you did not make in your PR, you're doing it wrong.
 * Also don't forget to add a comment when you update a PR with a ping to [the maintainers](https://github.com/orgs/api-platform/people), so he/she will get a notification.
-* Squash your commits into one commit (see the next chapter).
-
-All Pull Requests must include [this header](.github/PULL_REQUEST_TEMPLATE.md).
 
 ### Tests
 
-On `api-platform/core` there are two kinds of tests: unit (`phpunit`) and integration tests (`behat`).
+On `api-platform/core` there are two kinds of tests: unit (`phpunit` through `simple-phpunit`) and integration tests (`behat`).
 
-Both `phpunit` and `behat` are development dependencies and should be available in the `vendor` directory.
+Both `simple-phpunit` and `behat` are development dependencies and should be available in the `vendor` directory.
 
 #### PHPUnit and Coverage Generation
 
 To launch unit tests:
 
-    vendor/bin/phpunit --stop-on-failure -vvv
+    vendor/bin/simple-phpunit --stop-on-failure -vvv
 
 If you want coverage, you will need the `pcov` PHP extension and run:
 
-    vendor/bin/phpunit --coverage-html coverage -vvv --stop-on-failure
+    vendor/bin/simple-phpunit --coverage-html coverage -vvv --stop-on-failure
 
 Sometimes there might be an error with too many open files when generating coverage. To fix this, you can increase the `ulimit`, for example:
 
@@ -105,28 +97,6 @@ If you want to launch Behat tests for MongoDB, the command is:
 
 To get more details about an error, replace `--format=progress` by `-vvv`.
 
-## Squash your Commits
-
-If you have 3 commits, start with:
-
-    git rebase -i HEAD~3
-
-An editor will be opened with your 3 commits, all prefixed by `pick`.
-
-Replace all `pick` prefixes by `fixup` (or `f`) **except the first commit** of the list.
-
-Save and quit the editor.
-
-After that, all your commits will be squashed into the first one and the commit message will be the first one.
-
-If you would like to rename your commit message, type:
-
-    git commit --amend
-
-Now force push to update your PR:
-
-    git push --force-with-lease
-
 # License and Copyright Attribution
 
 When you open a Pull Request to the API Platform project, you agree to license your code under the [MIT license](LICENSE)
@@ -138,7 +108,7 @@ If you include code from another project, please mention it in the Pull Request 
 
 # Releases
 
-This section is dedicated to maintainers.
+This section is for maintainers.
 
 1. Update the JavaScript dependencies by running `./update-js.sh` (always check if it works in a browser)
 2. Update the `CHANGELOG.md` file (be sure to include Pull Request numbers when appropriate)

@@ -107,7 +107,7 @@ class ConfigurationTest extends TestCase
                 'serialize_payload_fields' => [],
             ],
             'name_converter' => null,
-            'enable_fos_user' => true,
+            'enable_fos_user' => false,
             'enable_nelmio_api_doc' => false,
             'enable_swagger' => true,
             'enable_swagger_ui' => true,
@@ -144,6 +144,7 @@ class ConfigurationTest extends TestCase
                 'flow' => 'application',
                 'tokenUrl' => '/oauth/v2/token',
                 'authorizationUrl' => '/oauth/v2/auth',
+                'refreshUrl' => '/oauth/v2/refresh',
                 'scopes' => [],
             ],
             'swagger' => [
@@ -182,6 +183,7 @@ class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'varnish_urls' => [],
                     'request_options' => [],
+                    'max_header_length' => 7500,
                 ],
                 'etag' => true,
                 'max_age' => null,
@@ -204,6 +206,19 @@ class ConfigurationTest extends TestCase
             ],
             'allow_plain_identifiers' => false,
             'resource_class_directories' => [],
+            'asset_package' => null,
+            'openapi' => [
+                'contact' => [
+                    'name' => null,
+                    'url' => null,
+                    'email' => null,
+                ],
+                'termsOfService' => null,
+                'license' => [
+                    'name' => null,
+                    'url' => null,
+                ],
+            ],
         ], $config);
     }
 
@@ -231,7 +246,6 @@ class ConfigurationTest extends TestCase
 
     /**
      * @group legacy
-     * @expectedDeprecation The use of the `default_operation_path_resolver` has been deprecated in 2.1 and will be removed in 3.0. Use `path_segment_name_generator` instead.
      */
     public function testLegacyDefaultOperationPathResolver()
     {
@@ -260,7 +274,7 @@ class ConfigurationTest extends TestCase
     public function testExceptionToStatusConfigWithInvalidHttpStatusCode($invalidHttpStatusCode)
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessageRegExp('/The HTTP status code ".+" is not valid\\./');
+        $this->expectExceptionMessageMatches('/The HTTP status code ".+" is not valid\\./');
 
         $this->processor->processConfiguration($this->configuration, [
             'api_platform' => [
@@ -289,7 +303,7 @@ class ConfigurationTest extends TestCase
     public function testExceptionToStatusConfigWithInvalidHttpStatusCodeValue($invalidHttpStatusCodeValue)
     {
         $this->expectException(InvalidTypeException::class);
-        $this->expectExceptionMessageRegExp('/Invalid type for path "api_platform\\.exception_to_status\\.Exception". Expected "?int"?, but got .+\\./');
+        $this->expectExceptionMessageMatches('/Invalid type for path "api_platform\\.exception_to_status\\.Exception". Expected "?int"?, but got .+\\./');
 
         $this->processor->processConfiguration($this->configuration, [
             'api_platform' => [
@@ -368,7 +382,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame([2], $config['swagger']['versions']);
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessageRegExp('/Only the versions .+ are supported. Got .+./');
+        $this->expectExceptionMessageMatches('/Only the versions .+ are supported. Got .+./');
 
         $this->processor->processConfiguration($this->configuration, [
             'api_platform' => [

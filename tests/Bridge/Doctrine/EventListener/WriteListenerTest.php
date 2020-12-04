@@ -15,8 +15,9 @@ namespace ApiPlatform\Core\Tests\Bridge\Doctrine\EventListener;
 
 use ApiPlatform\Core\Bridge\Doctrine\EventListener\WriteListener;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Entity\Dummy;
-use Doctrine\Common\Persistence\ManagerRegistry;
-use Doctrine\Common\Persistence\ObjectManager;
+use ApiPlatform\Core\Tests\ProphecyTrait;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ObjectManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -27,6 +28,8 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 class WriteListenerTest extends TestCase
 {
+    use ProphecyTrait;
+
     /**
      * @expectedDeprecation The ApiPlatform\Core\Bridge\Doctrine\EventListener\WriteListener class is deprecated since version 2.2 and will be removed in 3.0. Use the ApiPlatform\Core\EventListener\WriteListener class instead.
      */
@@ -69,12 +72,9 @@ class WriteListenerTest extends TestCase
         $request = new Request();
         $request->setMethod('DELETE');
         $request->attributes->set('_api_resource_class', 'Dummy');
-        $eventProphecy = $this->prophesize(ViewEvent::class);
-        $eventProphecy->setControllerResult(null)->shouldBeCalled();
-        $eventProphecy->getRequest()->willReturn($request);
-        $eventProphecy->getControllerResult()->willReturn($dummy);
 
-        $writeListener->onKernelView($eventProphecy->reveal());
+        $event = new ViewEvent($this->prophesize(HttpKernelInterface::class)->reveal(), $request, HttpKernelInterface::MASTER_REQUEST, $dummy);
+        $writeListener->onKernelView($event);
     }
 
     /**

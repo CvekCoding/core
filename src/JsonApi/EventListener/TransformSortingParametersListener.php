@@ -34,11 +34,12 @@ final class TransformSortingParametersListener
     public function onKernelRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();
+        $orderParameter = $request->query->all()['sort'] ?? null;
 
         if (
-            'jsonapi' !== $request->getRequestFormat() ||
-            null === ($orderParameter = $request->query->get('sort')) ||
-            \is_array($orderParameter)
+            null === $orderParameter ||
+            \is_array($orderParameter) ||
+            'jsonapi' !== $request->getRequestFormat()
         ) {
             return;
         }

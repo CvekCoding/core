@@ -19,6 +19,7 @@ use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Doctrine\Orm\Filter\DummyFilter;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Entity\Dummy;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use Doctrine\Common\Annotations\Reader;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
@@ -28,13 +29,15 @@ use Prophecy\Argument;
  */
 class AnnotationResourceFilterMetadataFactoryTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testCreate()
     {
         $decorated = $this->prophesize(ResourceMetadataFactoryInterface::class);
         $decorated->create(Dummy::class)->willReturn(new ResourceMetadata('hello', 'blabla'))->shouldBeCalled();
 
         $reader = $this->prophesize(Reader::class);
-        $reader->getClassAnnotations(Argument::type(\ReflectionClass::class))->shouldBeCalled()->willReturn([
+        $reader->getClassAnnotations(Argument::type(\ReflectionClass::class))->shouldBeCalled()->willReturn([ // @phpstan-ignore-next-line
             new ApiFilter(['value' => DummyFilter::class]),
         ]);
 

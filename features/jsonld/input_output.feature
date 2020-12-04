@@ -69,11 +69,13 @@ Feature: JSON-LD DTO input and output
       "@type": "hydra:Collection",
       "hydra:member": [
         {
+          "@type": "DummyDtoCustom",
           "@id": "/dummy_dto_customs/1",
           "foo": "test",
           "bar": 1
         },
         {
+          "@type": "DummyDtoCustom",
           "@id": "/dummy_dto_customs/2",
           "foo": "test",
           "bar": 2
@@ -151,13 +153,15 @@ Feature: JSON-LD DTO input and output
         "hydra": "http://www.w3.org/ns/hydra/core#",
         "id": "OutputDto/id",
         "baz": "OutputDto/baz",
-        "bat": "OutputDto/bat"
+        "bat": "OutputDto/bat",
+        "relatedDummies": "OutputDto/relatedDummies"
       },
       "@type": "DummyDtoInputOutput",
       "@id": "/dummy_dto_input_outputs/1",
       "id": 1,
       "baz": 1,
-      "bat": "test"
+      "bat": "test",
+      "relatedDummies": []
     }
     """
     When I add "Accept" header equal to "application/ld+json"
@@ -178,13 +182,15 @@ Feature: JSON-LD DTO input and output
         "hydra": "http://www.w3.org/ns/hydra/core#",
         "id": "OutputDto/id",
         "baz": "OutputDto/baz",
-        "bat": "OutputDto/bat"
+        "bat": "OutputDto/bat",
+        "relatedDummies": "OutputDto/relatedDummies"
       },
       "@type": "DummyDtoInputOutput",
       "@id": "/dummy_dto_input_outputs/1",
       "id": 1,
       "baz": 2,
-      "bat": "test"
+      "bat": "test",
+      "relatedDummies": []
     }
     """
 
@@ -237,13 +243,15 @@ Feature: JSON-LD DTO input and output
         "hydra": "http://www.w3.org/ns/hydra/core#",
         "id": "OutputDto/id",
         "baz": "OutputDto/baz",
-        "bat": "OutputDto/bat"
+        "bat": "OutputDto/bat",
+        "relatedDummies": "OutputDto/relatedDummies"
       },
       "@type": "DummyDtoNoInput",
       "@id": "/dummy_dto_no_inputs/1",
       "id": 1,
       "baz": 1,
-      "bat": "test"
+      "bat": "test",
+      "relatedDummies": []
     }
     """
 
@@ -260,13 +268,15 @@ Feature: JSON-LD DTO input and output
         "hydra": "http://www.w3.org/ns/hydra/core#",
         "id": "OutputDto/id",
         "baz": "OutputDto/baz",
-        "bat": "OutputDto/bat"
+        "bat": "OutputDto/bat",
+        "relatedDummies": "OutputDto/relatedDummies"
       },
       "@type": "DummyDtoNoInput",
       "@id": "/dummy_dto_no_inputs/1",
       "id": 1,
       "baz": 1,
-      "bat": "testtest"
+      "bat": "testtest",
+      "relatedDummies": []
     }
     """
 
@@ -309,3 +319,38 @@ Feature: JSON-LD DTO input and output
       "data": 123
     }
     """
+
+  @createSchema
+  Scenario: Initialize input data with a DataTransformerInitializer 
+    Given there is an InitializeInput object with id 1
+    When I send a "PUT" request to "/initialize_inputs/1" with body:
+    """
+    {
+      "name": "La peste"
+    }
+    """
+    Then the response status code should be 200
+    And the response should be in JSON
+    And the JSON should be equal to:
+    """
+    {
+      "@context": "/contexts/InitializeInput",
+      "@id": "/initialize_inputs/1",
+      "@type": "InitializeInput",
+      "id": 1,
+      "manager": "Orwell",
+      "name": "La peste"
+    }
+    """
+
+  Scenario: Create a resource with a custom Input
+    When I send a "POST" request to "/dummy_dto_customs" with body:
+    """
+    {
+      "foo": "test",
+      "bar": "test" 
+    }
+    """
+    Then the response status code should be 400
+    And the response should be in JSON
+    And the JSON node "hydra:description" should be equal to "The input data is misformatted."

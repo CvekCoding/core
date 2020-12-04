@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace ApiPlatform\Core\Tests\Problem\Serializer;
 
 use ApiPlatform\Core\Problem\Serializer\ConstraintViolationListNormalizer;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Symfony\Component\Serializer\NameConverter\NameConverterInterface;
@@ -26,6 +27,8 @@ use Symfony\Component\Validator\ConstraintViolationList;
  */
 class ConstraintViolationNormalizerTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testSupportNormalization()
     {
         $nameConverterProphecy = $this->prophesize(NameConverterInterface::class);
@@ -50,19 +53,19 @@ class ConstraintViolationNormalizerTest extends TestCase
         $constraint = new NotNull();
         $constraint->payload = ['severity' => 'warning', 'anotherField2' => 'aValue'];
         $list = new ConstraintViolationList([
-            new ConstraintViolation('a', 'b', [], 'c', 'd', 'e', null, null, $constraint),
+            new ConstraintViolation('a', 'b', [], 'c', 'd', 'e', null, 'f24bdbad0becef97a6887238aa58221c', $constraint),
             new ConstraintViolation('1', '2', [], '3', '4', '5'),
         ]);
 
         $expected = [
             'type' => 'https://tools.ietf.org/html/rfc2616#section-10',
             'title' => 'An error occurred',
-            'detail' => '_d: a
-_4: 1',
+            'detail' => "_d: a\n_4: 1",
             'violations' => [
                 [
                     'propertyPath' => '_d',
                     'message' => 'a',
+                    'code' => 'f24bdbad0becef97a6887238aa58221c',
                     'payload' => [
                         'severity' => 'warning',
                     ],
@@ -70,6 +73,7 @@ _4: 1',
                 [
                     'propertyPath' => '_4',
                     'message' => '1',
+                    'code' => null,
                 ],
             ],
         ];

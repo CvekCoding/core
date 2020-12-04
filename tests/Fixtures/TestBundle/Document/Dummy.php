@@ -27,6 +27,11 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @author Alexandre Delplace <alexandre.delplacemille@gmail.com>
  *
  * @ApiResource(attributes={
+ *     "doctrine_mongodb"={
+ *         "execute_options"={
+ *             "allowDiskUse"=true
+ *         }
+ *     },
  *     "filters"={
  *         "my_dummy.mongodb.boolean",
  *         "my_dummy.mongodb.date",
@@ -97,7 +102,7 @@ class Dummy
      * @var \DateTime A dummy date
      *
      * @ODM\Field(type="date", nullable=true)
-     * @Assert\DateTime
+     * @ApiProperty(iri="http://schema.org/DateTime")
      */
     public $dummyDate;
 
@@ -214,10 +219,6 @@ class Dummy
     public function getDescription()
     {
         return $this->description;
-    }
-
-    public function hasRole($role)
-    {
     }
 
     public function getFoo()

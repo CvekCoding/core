@@ -21,6 +21,7 @@ use ApiPlatform\Core\Serializer\Filter\FilterInterface as SerializerFilterInterf
 use ApiPlatform\Core\Serializer\SerializerContextBuilderInterface;
 use ApiPlatform\Core\Serializer\SerializerFilterContextBuilder;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Entity\DummyGroup;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +31,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class SerializerFilterContextBuilderTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testCreateFromRequestWithCollectionOperation()
     {
         $request = new Request();
@@ -147,6 +150,10 @@ class SerializerFilterContextBuilderTest extends TestCase
         $attributes = [
             'resource_class' => DummyGroup::class,
             'collection_operation_name' => 'get',
+            'identifiers' => [
+                'id' => [DummyGroup::class, 'id'],
+            ],
+            'has_composite_identifier' => false,
             'receive' => true,
             'respond' => true,
             'persist' => true,

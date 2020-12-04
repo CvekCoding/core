@@ -44,11 +44,11 @@ class ValidationExceptionNormalizerTest extends TestCase
             new ConstraintViolation('message 1', '', [], '', 'field 1', 'invalid'),
             new ConstraintViolation('message 2', '', [], '', 'field 2', 'invalid'),
         ]), $exceptionMessage);
-        $error = new Error('test message', null, null, null, null, $exception);
+        $error = new Error('test message', null, null, [], null, $exception);
 
         $normalizedError = $this->validationExceptionNormalizer->normalize($error);
         $this->assertSame($exceptionMessage, $normalizedError['message']);
-        $this->assertSame(400, $normalizedError['extensions']['status']);
+        $this->assertSame(422, $normalizedError['extensions']['status']);
         $this->assertSame('user', $normalizedError['extensions']['category']);
         $this->assertArrayHasKey('violations', $normalizedError['extensions']);
         $this->assertSame([
@@ -66,7 +66,7 @@ class ValidationExceptionNormalizerTest extends TestCase
     public function testSupportsNormalization(): void
     {
         $exception = new ValidationException(new ConstraintViolationList([]));
-        $error = new Error('test message', null, null, null, null, $exception);
+        $error = new Error('test message', null, null, [], null, $exception);
 
         $this->assertTrue($this->validationExceptionNormalizer->supportsNormalization($error));
     }

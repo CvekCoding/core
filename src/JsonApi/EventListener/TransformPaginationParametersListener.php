@@ -27,11 +27,11 @@ final class TransformPaginationParametersListener
     public function onKernelRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();
+        $pageParameter = $request->query->all()['page'] ?? null;
 
         if (
-            'jsonapi' !== $request->getRequestFormat() ||
-            null === ($pageParameter = $request->query->get('page')) ||
-            !\is_array($pageParameter)
+            !\is_array($pageParameter) ||
+            'jsonapi' !== $request->getRequestFormat()
         ) {
             return;
         }

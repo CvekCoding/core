@@ -16,10 +16,13 @@ namespace ApiPlatform\Core\Tests\GraphQl\Action;
 use ApiPlatform\Core\GraphQl\Action\EntrypointAction;
 use ApiPlatform\Core\GraphQl\Action\GraphiQlAction;
 use ApiPlatform\Core\GraphQl\Action\GraphQlPlaygroundAction;
+use ApiPlatform\Core\GraphQl\Error\ErrorHandler;
 use ApiPlatform\Core\GraphQl\ExecutorInterface;
 use ApiPlatform\Core\GraphQl\Serializer\Exception\ErrorNormalizer;
 use ApiPlatform\Core\GraphQl\Serializer\Exception\HttpExceptionNormalizer;
 use ApiPlatform\Core\GraphQl\Type\SchemaBuilderInterface;
+use ApiPlatform\Core\Tests\ProphecyTrait;
+use GraphQL\Error\DebugFlag;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +40,8 @@ use Twig\Environment as TwigEnvironment;
  */
 class EntrypointActionTest extends TestCase
 {
+    use ProphecyTrait;
+
     /**
      * Hack to avoid transient failing test because of Date header.
      */
@@ -58,7 +63,7 @@ class EntrypointActionTest extends TestCase
 
     public function testGetAction(): void
     {
-        $request = new Request(['query' => 'graphqlQuery', 'variables' => '["graphqlVariable"]', 'operation' => 'graphqlOperationName']);
+        $request = new Request(['query' => 'graphqlQuery', 'variables' => '["graphqlVariable"]', 'operationName' => 'graphqlOperationName']);
         $request->setRequestFormat('json');
         $mockedEntrypoint = $this->getEntrypointAction();
 
@@ -67,7 +72,7 @@ class EntrypointActionTest extends TestCase
 
     public function testPostRawAction(): void
     {
-        $request = new Request(['variables' => '["graphqlVariable"]', 'operation' => 'graphqlOperationName'], [], [], [], [], [], 'graphqlQuery');
+        $request = new Request(['variables' => '["graphqlVariable"]', 'operationName' => 'graphqlOperationName'], [], [], [], [], [], 'graphqlQuery');
         $request->setFormat('graphql', 'application/graphql');
         $request->setMethod('POST');
         $request->headers->set('Content-Type', 'application/graphql');
@@ -78,7 +83,7 @@ class EntrypointActionTest extends TestCase
 
     public function testPostJsonAction(): void
     {
-        $request = new Request([], [], [], [], [], [], '{"query": "graphqlQuery", "variables": "[\"graphqlVariable\"]", "operation": "graphqlOperationName"}');
+        $request = new Request([], [], [], [], [], [], '{"query": "graphqlQuery", "variables": "[\"graphqlVariable\"]", "operationName": "graphqlOperationName"}');
         $request->setMethod('POST');
         $request->headers->set('Content-Type', 'application/json');
         $mockedEntrypoint = $this->getEntrypointAction();
@@ -119,14 +124,14 @@ class EntrypointActionTest extends TestCase
 
         return [
             'upload a single file' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 '{"file": ["variables.file"]}',
                 ['file' => $file],
                 ['file' => $file],
                 new JsonResponse(['GraphQL']),
             ],
             'upload multiple files' => [
-                '{"query": "graphqlQuery", "variables": {"files": [null, null, null]}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"files": [null, null, null]}, "operationName": "graphqlOperationName"}',
                 '{"0": ["variables.files.0"], "1": ["variables.files.1"], "2": ["variables.files.2"]}',
                 [
                     '0' => $file,
@@ -150,7 +155,7 @@ class EntrypointActionTest extends TestCase
                 new Response('{"errors":[{"message":"GraphQL multipart request does not respect the specification.","extensions":{"category":"user","status":400}}]}'),
             ],
             'upload without providing map' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 null,
                 ['file' => $file],
                 ['file' => null],
@@ -164,28 +169,28 @@ class EntrypointActionTest extends TestCase
                 new Response('{"errors":[{"message":"GraphQL data is not valid JSON.","extensions":{"category":"user","status":400}}]}'),
             ],
             'upload with invalid map JSON' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 '{invalid}',
                 ['file' => $file],
                 ['file' => null],
                 new Response('{"errors":[{"message":"GraphQL multipart request map is not valid JSON.","extensions":{"category":"user","status":400}}]}'),
             ],
             'upload with no file' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 '{"file": ["file"]}',
                 [],
                 ['file' => null],
                 new Response('{"errors":[{"message":"GraphQL multipart request file has not been sent correctly.","extensions":{"category":"user","status":400}}]}'),
             ],
             'upload with wrong map' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 '{"file": ["file"]}',
                 ['file' => $file],
                 ['file' => null],
                 new Response('{"errors":[{"message":"GraphQL multipart request path in map is invalid.","extensions":{"category":"user","status":400}}]}'),
             ],
             'upload when variable path does not exist' => [
-                '{"query": "graphqlQuery", "variables": {"file": null}, "operation": "graphqlOperationName"}',
+                '{"query": "graphqlQuery", "variables": {"file": null}, "operationName": "graphqlOperationName"}',
                 '{"file": ["variables.wrong"]}',
                 ['file' => $file],
                 ['file' => null],
@@ -217,7 +222,7 @@ class EntrypointActionTest extends TestCase
 
     public function testBadVariablesAction(): void
     {
-        $request = new Request(['query' => 'graphqlQuery', 'variables' => 'graphqlVariable', 'operation' => 'graphqlOperationName']);
+        $request = new Request(['query' => 'graphqlQuery', 'variables' => 'graphqlVariable', 'operationName' => 'graphqlOperationName']);
         $request->setRequestFormat('json');
         $mockedEntrypoint = $this->getEntrypointAction();
 
@@ -235,19 +240,23 @@ class EntrypointActionTest extends TestCase
             new HttpExceptionNormalizer(),
             new ErrorNormalizer(),
         ]);
+        $errorHandler = new ErrorHandler();
 
         $executionResultProphecy = $this->prophesize(ExecutionResult::class);
-        $executionResultProphecy->toArray(false)->willReturn(['GraphQL']);
+        $executionResultProphecy->toArray(DebugFlag::NONE)->willReturn(['GraphQL']);
         $executionResultProphecy->setErrorFormatter([$normalizer, 'normalize'])->willReturn($executionResultProphecy);
+        $executionResultProphecy->setErrorsHandler($errorHandler)->willReturn($executionResultProphecy);
         $executorProphecy = $this->prophesize(ExecutorInterface::class);
         $executorProphecy->executeQuery(Argument::is($schema->reveal()), 'graphqlQuery', null, null, $variables, 'graphqlOperationName')->willReturn($executionResultProphecy->reveal());
 
         $twigProphecy = $this->prophesize(TwigEnvironment::class);
+        $twigProphecy->render(Argument::cetera())->willReturn('');
+
         $routerProphecy = $this->prophesize(RouterInterface::class);
 
         $graphiQlAction = new GraphiQlAction($twigProphecy->reveal(), $routerProphecy->reveal(), true);
         $graphQlPlaygroundAction = new GraphQlPlaygroundAction($twigProphecy->reveal(), $routerProphecy->reveal(), true);
 
-        return new EntrypointAction($schemaBuilderProphecy->reveal(), $executorProphecy->reveal(), $graphiQlAction, $graphQlPlaygroundAction, $normalizer, false, true, true, 'graphiql');
+        return new EntrypointAction($schemaBuilderProphecy->reveal(), $executorProphecy->reveal(), $graphiQlAction, $graphQlPlaygroundAction, $normalizer, $errorHandler, false, true, true, 'graphiql');
     }
 }

@@ -24,10 +24,13 @@ use ApiPlatform\Core\Metadata\Property\PropertyNameCollection;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Entity\Dummy;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 
 class SchemaFactoryTest extends TestCase
 {
+    use ProphecyTrait;
+
     private $schemaFactory;
 
     protected function setUp(): void
@@ -54,7 +57,7 @@ class SchemaFactoryTest extends TestCase
         $resultSchema = $this->schemaFactory->buildSchema(Dummy::class);
 
         $this->assertTrue($resultSchema->isDefined());
-        $this->assertEquals(Dummy::class.':jsonld', $resultSchema->getRootDefinitionKey());
+        $this->assertEquals(str_replace('\\', '.', Dummy::class).'.jsonld', $resultSchema->getRootDefinitionKey());
     }
 
     public function testCustomFormatBuildSchema(): void
@@ -62,7 +65,7 @@ class SchemaFactoryTest extends TestCase
         $resultSchema = $this->schemaFactory->buildSchema(Dummy::class, 'json');
 
         $this->assertTrue($resultSchema->isDefined());
-        $this->assertEquals(Dummy::class, $resultSchema->getRootDefinitionKey());
+        $this->assertEquals(str_replace('\\', '.', Dummy::class), $resultSchema->getRootDefinitionKey());
     }
 
     public function testHasRootDefinitionKeyBuildSchema(): void
@@ -71,14 +74,19 @@ class SchemaFactoryTest extends TestCase
         $definitions = $resultSchema->getDefinitions();
         $rootDefinitionKey = $resultSchema->getRootDefinitionKey();
 
-        $this->assertEquals(Dummy::class.':jsonld', $rootDefinitionKey);
+        $this->assertEquals(str_replace('\\', '.', Dummy::class).'.jsonld', $rootDefinitionKey);
         $this->assertArrayHasKey($rootDefinitionKey, $definitions);
         $this->assertArrayHasKey('properties', $definitions[$rootDefinitionKey]);
+        $properties = $resultSchema['definitions'][$rootDefinitionKey]['properties'];
+        $this->assertArrayHasKey('@context', $properties);
+        $this->assertArrayHasKey('@type', $properties);
+        $this->assertArrayHasKey('@id', $properties);
     }
 
     public function testSchemaTypeBuildSchema(): void
     {
         $resultSchema = $this->schemaFactory->buildSchema(Dummy::class, 'jsonld', Schema::TYPE_OUTPUT, OperationType::COLLECTION);
+        $definitionName = str_replace('\\', '.', Dummy::class).'.jsonld';
 
         $this->assertNull($resultSchema->getRootDefinitionKey());
         $this->assertArrayHasKey('properties', $resultSchema);
@@ -86,6 +94,10 @@ class SchemaFactoryTest extends TestCase
         $this->assertArrayHasKey('hydra:totalItems', $resultSchema['properties']);
         $this->assertArrayHasKey('hydra:view', $resultSchema['properties']);
         $this->assertArrayHasKey('hydra:search', $resultSchema['properties']);
+        $properties = $resultSchema['definitions'][$definitionName]['properties'];
+        $this->assertArrayNotHasKey('@context', $properties);
+        $this->assertArrayHasKey('@type', $properties);
+        $this->assertArrayHasKey('@id', $properties);
 
         $resultSchema = $this->schemaFactory->buildSchema(Dummy::class, 'jsonld', Schema::TYPE_OUTPUT, null, null, null, null, true);
 
@@ -95,5 +107,9 @@ class SchemaFactoryTest extends TestCase
         $this->assertArrayHasKey('hydra:totalItems', $resultSchema['properties']);
         $this->assertArrayHasKey('hydra:view', $resultSchema['properties']);
         $this->assertArrayHasKey('hydra:search', $resultSchema['properties']);
+        $properties = $resultSchema['definitions'][$definitionName]['properties'];
+        $this->assertArrayNotHasKey('@context', $properties);
+        $this->assertArrayHasKey('@type', $properties);
+        $this->assertArrayHasKey('@id', $properties);
     }
 }

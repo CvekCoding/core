@@ -1,5 +1,107 @@
 # Changelog
 
+## 2.6.0
+
+* Cache: adds a `max_header_length` configuration (#2865)
+* Cache: support `stale-while-revalidate` and `stale-if-error` cache control headers (#3439)
+* Config: Add an option to set global default values (#3151)
+* DTO: Add `ApiPlatform\Core\DataTransformer\DataTransformerInitializerInterface` to pre-hydrate inputs (#3701)
+* DTO: Improve Input/Output support (#3231)
+* Data Persisters: Add `previous_data` to the context passed to persisters when available (#3752)
+* Debug: Display API Platform's version in the debug bar (#3235)
+* Docs: Make `asset_package` configurable (#3764)
+* Doctrine: Allow searching on multiple values on every strategies (#3786)
+* Elasticsearch: The `Paginator` class constructor now receives the denormalization context to support denormalizing documents using serialization groups. This change may cause potential **BC** breaks for existing applications as denormalization was previously done without serialization groups.
+* GraphQL: **BC** New syntax for the filters' arguments to preserve the order: `order: [{foo: 'asc'}, {bar: 'desc'}]` (#3468)
+* GraphQL: **BC** `operation` is now `operationName` to follow the standard (#3568)
+* GraphQL: **BC** `paginationType` is now `pagination_type` (#3614)
+* GraphQL: Add page-based pagination (#3175, #3517)
+* GraphQL: Allow formatting GraphQL errors based on exceptions (#3063)
+* GraphQL: Errors thrown from the GraphQL library can now be handled (#3632, #3643)
+* GraphQL: Possibility to add a custom description for queries, mutations and subscriptions (#3477, #3514)
+* GraphQL: Subscription support with Mercure (#3321)
+* GraphQL: Support for field name conversion (serialized name) (#3455, #3516)
+* Hydra: Sort entries in the API entrypoint (#3091)
+* Identifiers: Add Symfony Uid support (#3715)
+* IriConverter: **BC** Fix double encoding in IRIs - may cause breaking change as some characters no longer encoded in output (#3552)
+* JSON-LD: Add an `iri_only` attribute to simplify documents structure (useful when using Vulcain) (#3275)
+* Exception: Response error codes can be specified via the `ApiPlatform\Core\Exception\ErrorCodeSerializableInterface` (#2922)
+* Mercure: Add a `normalization_context` option in `mercure` attribute (#3772)
+* Messenger: Add a context stamp containing contextual data (#3157)
+* Messenger: Add a new `messenger=persist` to option to call the standard data persister before publishing the message (#3617)
+* Metadata: Deprecate `InheritedPropertyMetadataFactory` (#3273)
+* Metadata: Improve and simplify identifiers management (#3825)
+* Metadata: Support the Symfony Serializer's `@Ignore` annotation (#3820)
+* Metadata: Support using annotations as PHP 8 attributes (#3869, #3868, #3851)
+* Metadata: Throw an error when no identifier is defined (#3871)
+* Metadata: Use `id` as default identifier if none provided (#3874)
+* MongoDB: Mercure support (#3290)
+* MongoDB: Possibility to add execute options (aggregate command fields) for a resource, like `allowDiskUse` (#3144)
+* OpenAPI: Add default values of PHP properties to the documentation (#2386)
+* OpenAPI: **BC** Replace all characters other than `[a-zA-Z0-9\.\-_]` to `.` in definition names to be compliant with OpenAPI 3.0 (#3669)
+* OpenAPI: Refactor OpenAPI v3 support, OpenAPI v2 (aka Swagger) is deprecated (#3407)
+* Order: Support default order for a specific custom operation (#3784)
+* PATCH: Support patching deep objects (#3847)
+* Router: UrlGenerator strategy configuration via `url_generation_strategy` (#3198)
+* Routing: Add stateless `ApiResource` attribute (#3436)
+* Security: Add support for access control rule on attributes (#3503)
+* Subresources: `resourceClass` can now be defined as a container parameter in XML and YAML definitions
+* Symfony: improved 5.x support with fewer deprecations (#3589)
+* Symfony: Allow using `ItemNormalizer` without Symfony SecurityBundle (#3801)
+* Symfony: Lazy load all commands (#3798)
+* Tests: adds a method to retrieve the CookieJar in the test Client `getCookieJar`
+* Validator: Add the violation code to the violation properties (#3857)
+* Validator: Allow customizing the validation error status code (#3808)
+* Validator: Autoconfiguration of validation groups generator via `ApiPlatform\Core\Validator\ValidationGroupsGeneratorInterface`
+* Validator: Deprecate using a validation groups generator service not implementing `ApiPlatform\Core\Bridge\Symfony\Validator\ValidationGroupsGeneratorInterface` (#3346)
+* Validator: Property validation through OpenAPI (#33329)
+* Validator:Query filters and parameters are validated (#1723)
+* `ExceptionInterface` now extends `\Throwable` (#3217)
+
+## 2.5.8
+
+* PHP 8 support (#3791, #3745, #3855)
+* Metadata: Fix merging null values from annotations (#3711)
+* JSON-LD: Add missing `@type` from collection using output DTOs (#3699)
+* Cache: Improve `PurgeHttpCacheListener` performances (#3743)
+* Cache: Fix `VarnishPurger` max header length (#3843)
+* Identifiers: Do not denormalize the same identifier twice (#3762)
+* OpenAPI: Lazy load `SwaggerCommand` (#3802)
+* OpenAPI: Use Output class name instead of the Resource short name when available (#3741)
+* Router: Replace baseurl only once (#3776)
+* Mercure: Publisher bug fixes (#3790, #3739)
+* Serializer: Catch NotNormalizableValueException to UnexpectedValueEception with inputs (#3697)
+* Doctrine: ODM escape search terms in RegexFilter
+* Tests: Improve JSON Schema assertions (#3807, #3803, #3804, #3806, #3817, #3829, #3830)
+* Tests: Allow passing extra options in ApiTestClient (#3486)
+* Docs: Upgrade Swagger UI to version 3.37.2 (#3867)
+* Docs: Upgrade ReDoc to version 2.0.0-rc.45 (#3867)
+* Docs: Upgrade GraphiQL to version 15.3.0 (#3867)
+* Docs: Upgrade GraphQL Playground to version 1.7.26 (#3867)
+
+For compatibility reasons with Symfony 5.2 and PHP 8, we do not test anymore the integration with these legacy packages:
+- FOSUserBundle
+- NelmioApiDoc 2
+
+## 2.5.7
+
+* Compatibility with Symfony 5.1 (#3589 and #3688)
+* Resource `Cache-Control` HTTP header can be private (#3543)
+* Doctrine: Fix missing `ManagerRegistry` class (#3684)
+* Doctrine: Order filter doesn't throw anymore with numeric key (#3673 and #3687)
+* Doctrine: Fix ODM check change tracking deferred (#3629)
+* Doctrine: Allow 2inflector version 2.0 (#3607)
+* OpenAPI: Allow subresources context to be added (#3685) 
+* OpenAPI: Fix pagination documentation on subresources (#3678)
+* Subresource: Fix query when using a custom identifier (#3529 and #3671)
+* GraphQL: Fix relation types without Doctrine (#3591)
+* GraphQL: Fix DTO relations (#3594)
+* GraphQL: Compatibility with graphql-php version 14 (#3621 and #3654)
+* Docs: Upgrade Swagger UI to version 3.32.5 (#3693)
+* Docs: Upgrade ReDoc to version 2.0.0-rc.40 (#3693)
+* Docs: Upgrade GraphiQL to version 1.0.3 (#3693)
+* Docs: Upgrade GraphQL Playground to version 1.7.23 (#3693)
+
 ## 2.5.6
 
 * Add support for Mercure 0.10 (#3584)
@@ -85,7 +187,7 @@
 
 * Allow to not declare GET item operation
 * Add support for the Accept-Patch header
-* Make the `maximum_items_per_page` attribute consistent with other attributes controlling pagination 
+* Make the `maximum_items_per_page` attribute consistent with other attributes controlling pagination
 * Allow to use a string instead of an array for serializer groups
 * Test: Add a helper method to find the IRI of a resource
 * Test: Add assertions for testing response against JSON Schema from API resource

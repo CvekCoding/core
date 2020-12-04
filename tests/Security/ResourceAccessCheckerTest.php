@@ -15,7 +15,9 @@ namespace ApiPlatform\Core\Tests\Security;
 
 use ApiPlatform\Core\Security\ExpressionLanguage;
 use ApiPlatform\Core\Security\ResourceAccessChecker;
+use ApiPlatform\Core\Tests\Fixtures\Serializable;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Entity\Dummy;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolverInterface;
@@ -27,6 +29,8 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
  */
 class ResourceAccessCheckerTest extends TestCase
 {
+    use ProphecyTrait;
+
     /**
      * @dataProvider getGranted
      */
@@ -39,8 +43,10 @@ class ResourceAccessCheckerTest extends TestCase
         $tokenStorageProphecy = $this->prophesize(TokenStorageInterface::class);
 
         $tokenProphecy = $this->prophesize(TokenInterface::class);
+        $tokenProphecy->willImplement(Serializable::class);
         $token = $tokenProphecy->reveal();
         $tokenProphecy->getUser()->shouldBeCalled();
+
         if (method_exists($token, 'getRoleNames')) {
             $tokenProphecy->getRoleNames()->willReturn([])->shouldBeCalled();
         } else {
@@ -74,7 +80,7 @@ class ResourceAccessCheckerTest extends TestCase
 
         $authenticationTrustResolverProphecy = $this->prophesize(AuthenticationTrustResolverInterface::class);
         $tokenStorageProphecy = $this->prophesize(TokenStorageInterface::class);
-        $tokenStorageProphecy->getToken()->willReturn($this->prophesize(TokenInterface::class)->reveal());
+        $tokenStorageProphecy->getToken()->willReturn($this->prophesize(TokenInterface::class)->willImplement(Serializable::class)->reveal());
 
         $checker = new ResourceAccessChecker(null, $authenticationTrustResolverProphecy->reveal(), null, $tokenStorageProphecy->reveal());
         $checker->isGranted(Dummy::class, 'is_granted("ROLE_ADMIN")');

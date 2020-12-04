@@ -22,8 +22,10 @@ use ApiPlatform\Core\GraphQl\Serializer\ItemNormalizer;
 use ApiPlatform\Core\GraphQl\Serializer\SerializerContextBuilderInterface;
 use ApiPlatform\Core\Metadata\Resource\Factory\ResourceMetadataFactoryInterface;
 use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use GraphQL\Type\Definition\ResolveInfo;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -31,6 +33,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ReadStageTest extends TestCase
 {
+    use ExpectDeprecationTrait;
+    use ProphecyTrait;
+
     /** @var ReadStage */
     private $readStage;
     private $resourceMetadataFactoryProphecy;
@@ -101,6 +106,7 @@ class ReadStageTest extends TestCase
         $context = [
             'is_collection' => false,
             'is_mutation' => false,
+            'is_subscription' => false,
             'args' => ['id' => $identifier],
             'info' => $info,
         ];
@@ -132,18 +138,19 @@ class ReadStageTest extends TestCase
     }
 
     /**
-     * @dataProvider itemMutationProvider
+     * @dataProvider itemMutationOrSubscriptionProvider
      *
      * @param object|null $item
      * @param object|null $expectedResult
      */
-    public function testApplyMutation(string $resourceClass, ?string $identifier, $item, bool $throwNotFound, $expectedResult, ?string $expectedExceptionClass = null, ?string $expectedExceptionMessage = null): void
+    public function testApplyMutationOrSubscription(bool $isMutation, bool $isSubscription, string $resourceClass, ?string $identifier, $item, bool $throwNotFound, $expectedResult, ?string $expectedExceptionClass = null, ?string $expectedExceptionMessage = null): void
     {
         $operationName = 'create';
         $info = $this->prophesize(ResolveInfo::class)->reveal();
         $context = [
             'is_collection' => false,
-            'is_mutation' => true,
+            'is_mutation' => $isMutation,
+            'is_subscription' => $isSubscription,
             'args' => ['input' => ['id' => $identifier]],
             'info' => $info,
         ];
@@ -168,15 +175,17 @@ class ReadStageTest extends TestCase
         $this->assertSame($expectedResult, $result);
     }
 
-    public function itemMutationProvider(): array
+    public function itemMutationOrSubscriptionProvider(): array
     {
         $item = new \stdClass();
 
         return [
-            'no identifier' => ['myResource', null, $item, false, null],
-            'identifier' => ['stdClass', 'identifier', $item, false, $item],
-            'identifier bad item' => ['myResource', 'identifier', $item, false, $item, \UnexpectedValueException::class, 'Item "identifier" did not match expected type "shortName".'],
-            'identifier not found' => ['myResource', 'identifier_not_found', $item, true, null, NotFoundHttpException::class, 'Item "identifier_not_found" not found.'],
+            'no identifier' => [true, false, 'myResource', null, $item, false, null],
+            'identifier' => [true, false, 'stdClass', 'identifier', $item, false, $item],
+            'identifier bad item' => [true, false, 'myResource', 'identifier', $item, false, $item, \UnexpectedValueException::class, 'Item "identifier" did not match expected type "shortName".'],
+            'identifier not found' => [true, false, 'myResource', 'identifier_not_found', $item, true, null, NotFoundHttpException::class, 'Item "identifier_not_found" not found.'],
+            'no identifier (subscription)' => [false, true, 'myResource', null, $item, false, null],
+            'identifier (subscription)' => [false, true, 'stdClass', 'identifier', $item, false, $item],
         ];
     }
 
@@ -193,6 +202,7 @@ class ReadStageTest extends TestCase
         $context = [
             'is_collection' => true,
             'is_mutation' => false,
+            'is_subscription' => false,
             'args' => $args,
             'info' => $info,
             'source' => $source,
@@ -202,9 +212,9 @@ class ReadStageTest extends TestCase
         $normalizationContext = ['normalization' => true];
         $this->serializerContextBuilderProphecy->create($resourceClass, $operationName, $context, true)->shouldBeCalled()->willReturn($normalizationContext);
 
-        $this->subresourceDataProviderProphecy->getSubresource($resourceClass, ['id' => 3], $normalizationContext + ['filters' => $expectedFilters, 'property' => $fieldName, 'identifiers' => [['id', $resourceClass]], 'collection' => true], $operationName)->willReturn(['subresource']);
+        $this->subresourceDataProviderProphecy->getSubresource($resourceClass, ['id' => 3], $normalizationContext + ['filters' => $expectedFilters, 'property' => $fieldName, 'identifiers' => ['id' => [$resourceClass, 'id']], 'collection' => true], $operationName)->willReturn(['subresource']);
 
-        $this->collectionDataProviderProphecy->getCollection($resourceClass, $operationName, $normalizationContext + ['filters' => $expectedFilters])->willReturn($expectedResult);
+        $this->collectionDataProviderProphecy->getCollection($resourceClass, $operationName, $normalizationContext + ['filters' => $expectedFilters])->willReturn([]);
 
         $result = ($this->readStage)($resourceClass, $rootClass, $operationName, $context);
 
@@ -222,13 +232,52 @@ class ReadStageTest extends TestCase
                 ['filter_list' => 'filtered', 'filter_field_list' => ['filtered1', 'filtered2'], 'filter.list' => 'filtered', 'filter_field' => ['filtered1', 'filtered2'], 'filter.field' => ['filtered1', 'filtered2']],
                 [],
             ],
+            'with array filter syntax' => [
+                ['filter' => [['filterArg1' => 'filterValue1'], ['filterArg2' => 'filterValue2']]],
+                'myResource',
+                null,
+                ['filter' => ['filterArg1' => 'filterValue1', 'filterArg2' => 'filterValue2']],
+                [],
+            ],
             'with subresource' => [
                 [],
                 'myResource',
-                ['subresource' => [], ItemNormalizer::ITEM_IDENTIFIERS_KEY => ['id' => 3]],
+                ['subresource' => [], ItemNormalizer::ITEM_IDENTIFIERS_KEY => ['id' => 3], ItemNormalizer::ITEM_RESOURCE_CLASS_KEY => 'myResource'],
                 [],
                 ['subresource'],
             ],
         ];
+    }
+
+    /**
+     * @group legacy
+     */
+    public function testApplyCollectionWithDeprecatedFilterSyntax(): void
+    {
+        $operationName = 'collection_query';
+        $resourceClass = 'myResource';
+        $info = $this->prophesize(ResolveInfo::class)->reveal();
+        $fieldName = 'subresource';
+        $info->fieldName = $fieldName;
+        $context = [
+            'is_collection' => true,
+            'is_mutation' => false,
+            'is_subscription' => false,
+            'args' => ['filter' => [['filterArg1' => 'filterValue1', 'filterArg2' => 'filterValue2']]],
+            'info' => $info,
+            'source' => null,
+        ];
+        $this->resourceMetadataFactoryProphecy->create($resourceClass)->willReturn(new ResourceMetadata());
+
+        $normalizationContext = ['normalization' => true];
+        $this->serializerContextBuilderProphecy->create($resourceClass, $operationName, $context, true)->shouldBeCalled()->willReturn($normalizationContext);
+
+        $this->collectionDataProviderProphecy->getCollection($resourceClass, $operationName, $normalizationContext + ['filters' => ['filter' => ['filterArg1' => 'filterValue1', 'filterArg2' => 'filterValue2']]])->willReturn([]);
+
+        $this->expectDeprecation('The filter syntax "filter: {filterArg1: "filterValue1", filterArg2: "filterValue2"}" is deprecated since API Platform 2.6, use the following syntax instead: "filter: [{filterArg1: "filterValue1"}, {filterArg2: "filterValue2"}]".');
+
+        $result = ($this->readStage)($resourceClass, 'myResource', $operationName, $context);
+
+        $this->assertSame([], $result);
     }
 }

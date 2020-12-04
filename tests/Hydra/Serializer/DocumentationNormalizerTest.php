@@ -28,6 +28,7 @@ use ApiPlatform\Core\Metadata\Resource\ResourceMetadata;
 use ApiPlatform\Core\Metadata\Resource\ResourceNameCollection;
 use ApiPlatform\Core\Operation\Factory\SubresourceOperationFactoryInterface;
 use ApiPlatform\Core\Tests\Fixtures\TestBundle\Serializer\NameConverter\CustomConverter;
+use ApiPlatform\Core\Tests\ProphecyTrait;
 use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
 use Symfony\Component\PropertyInfo\Type;
@@ -37,6 +38,8 @@ use Symfony\Component\PropertyInfo\Type;
  */
 class DocumentationNormalizerTest extends TestCase
 {
+    use ProphecyTrait;
+
     public function testNormalize(): void
     {
         $this->doTestNormalize();
@@ -92,7 +95,7 @@ class DocumentationNormalizerTest extends TestCase
                 'resource_class' => 'relatedDummy',
                 'shortNames' => ['relatedDummy'],
                 'identifiers' => [
-                    ['id', 'dummy', true],
+                    'id' => ['dummy', 'id', true],
                 ],
                 'route_name' => 'api_dummies_subresource_get_related_dummy',
                 'path' => '/dummies/{id}/related_dummy.{_format}',
