@@ -347,7 +347,7 @@ final class TypeBuilder implements TypeBuilderInterface
                     ];
                 }
 
-                return $fieldsBuilder->getResourceObjectTypeFields($resourceClass, $resourceMetadata, $input, $queryName, null, $depth, $ioMetadata);
+                return $fieldsBuilder->getResourceObjectTypeFields($resourceClass, $resourceMetadata, $input, $queryName, null, $subscriptionName, $depth, $ioMetadata);
             },
             'resolveType' => function ($value, $context, $info) {
                 if (!isset($value[ItemNormalizer::ITEM_RESOURCE_CLASS_KEY])) {
