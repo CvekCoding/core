@@ -202,6 +202,7 @@ final class ApiResource
         ?bool $fetchPartial = null,
         ?bool $forceEager = null,
         ?bool $isInterface = null,
+        ?array $implements = null,
         ?array $formats = null,
         ?array $filters = null,
         ?array $hydraContext = null,

@@ -53,10 +53,10 @@ final class AnnotationResourceNameCollectionFactory implements ResourceNameColle
         }
 
         foreach (ReflectionClassRecursiveIterator::getReflectionClassesFromDirectories($this->paths) as $className => $reflectionClass) {
-            if (
-                (\PHP_VERSION_ID >= 80000 && $reflectionClass->getAttributes(ApiResource::class)) ||
-                (null !== $this->reader && ($annotation = $this->reader->getClassAnnotation($reflectionClass, ApiResource::class)))
-            ) {
+            if (\PHP_VERSION_ID >= 80000 && ($attributes = $reflectionClass->getAttributes(ApiResource::class))) {
+                $classes[$className]['enabled'] = true;
+                $classes[$className]['interface'] = $attributes[0]->getArguments()['isInterface'] ?? null;
+            } elseif (null !== $this->reader && ($annotation = $this->reader->getClassAnnotation($reflectionClass, ApiResource::class))) {
                 $classes[$className]['enabled'] = true;
                 $classes[$className]['interface'] = $annotation->isInterface;
             }
