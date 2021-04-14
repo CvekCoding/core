@@ -68,7 +68,7 @@ final class CatDocumentMetadataFactory implements DocumentMetadataFactoryInterfa
 
         try {
             $this->client->cat()->indices(['index' => $index]);
-        } catch (Missing404Exception $e) {
+        } catch (Missing404Exception | NoNodesAvailableException $e) {
             return $this->handleNotFound($documentMetadata, $resourceClass);
         }
 
